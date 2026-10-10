@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.MyApplication">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.MyApplication">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- App Widget Provider for Home Screen and Lock Screen (Keyguard) -->
+        <receiver
+            android:name=".widget.WorkTrackerWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/work_tracker_widget_info" />
+        </receiver>
+
+        <!-- Action Receiver for Widget and Notification Start/Stop Triggers -->
+        <receiver
+            android:name=".widget.WorkActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.example.action.START_WORK" />
+                <action android:name="com.example.action.STOP_WORK" />
+                <action android:name="com.example.action.TOGGLE_WORK" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Quick Settings Tile for 1-tap lockscreen shade access -->
+        <service
+            android:name=".widget.WorkTileService"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="Mesai Takip"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+    </application>
+
+</manifest>

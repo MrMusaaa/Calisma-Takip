@@ -1,0 +1,6 @@
+{
+  "name": "Mesai Takip",
+  "description": "Kilit ekranı widget'ı, çalışma sayacı, haftalık mesai ve Salı maaş günü kazanç takipçisi",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
