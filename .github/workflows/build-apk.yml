@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   build:
-    name: Build APK
+    name: Build & Release Latest APK
     runs-on: ubuntu-latest
 
     steps:
@@ -40,7 +40,7 @@ jobs:
       - name: Build Debug APK
         run: ./gradlew assembleDebug --no-daemon --stacktrace
 
-      - name: Rename APK for Easy Download
+      - name: Prepare APK File
         run: |
           cp app/build/outputs/apk/debug/app-debug.apk MesaiTakip.apk
 
@@ -50,21 +50,26 @@ jobs:
           name: MesaiTakip-APK
           path: MesaiTakip.apk
           retention-days: 30
+          overwrite: true
 
-      - name: Create or Update GitHub Release
+      - name: Publish or Update Latest Release
         uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         with:
-          tag_name: v1.0.0
-          name: "Mesai Takip v1.0.0 (Hazır APK)"
+          tag_name: latest
+          name: "Mesai Takip (En Güncel Sürüm)"
+          make_latest: true
           body: |
-            ### 📲 Kurulum Dosyası
-            Aşağıdaki **`MesaiTakip.apk`** dosyasına tıklayarak doğrudan telefonunuza indirebilir ve kurabilirsiniz.
+            ### 📲 Güncel Kurulum Dosyası
+            Her güncellemede otomatik olarak yeniden derlenen en güncel APK dosyasıdır.
             
-            - ⏱ Kilit ekranından anında Başlat / Bitir
-            - 🔋 Sıfır arka plan pil tüketimi
-            - 💰 Pazartesi - Pazar haftalık döngü & Salı Maaş Günü
-            - 📊 İnteraktif haftalık mesai ve kazanç grafiği
+            👉 **[MesaiTakip.apk](../../releases/latest/download/MesaiTakip.apk)** dosyasına dokunarak telefonunuza tek tıkla indirebilirsiniz.
+            
+            - ⏱ Redmi 12 ve tüm cihazlarda kilit ekranı kontrolü
+            - 🔋 0% pil tüketimi (zaman damgası mimarisi)
+            - 💰 Pazartesi - Pazar haftalık hesaplama & Salı Maaş Günü
+            - 📊 Haftalık mesai ve hakediş grafiği
+            - 📅 Tarih seçilebilir manuel mesai ekleme
           files: MesaiTakip.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

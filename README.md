@@ -20,15 +20,15 @@
 
 Uygulamanın hazır `.apk` dosyasını telefonunuza yüklemek için aşağıdaki iki yöntemden birini kullanabilirsiniz:
 
-### 🌟 1. Yöntem: GitHub Releases (En Kolay)
-1. Bu GitHub sayfasının sağ tarafında yer alan **[Releases (Sürümler)]** bölümüne tıklayın (veya doğrudan [Releases sekmesine gidin](../../releases)).
-2. **`MesaiTakip.apk`** dosyasına tıklayarak indirin.
-3. İndirilen dosyaya dokunarak telefonunuza kurun!
+### 🌟 1. Yöntem: GitHub Releases (Otomatik Güncel Sürüm)
+1. Sağ paneldeki **[Releases (Sürümler)]** bölümüne veya doğrudan [En Güncel Sürüm Sayfasına](../../releases/latest) gidin.
+2. **`MesaiTakip.apk`** dosyasına dokunarak tek tıkla indirin.
+3. Her GitHub güncellemesinde bu dosya otomatik olarak en son sürüme güncellenir!
 
-### ⚙️ 2. Yöntem: GitHub Actions (Otomatik Derleme)
+### ⚙️ 2. Yöntem: GitHub Actions (Yapıtlar / Artifacts)
 1. Bu reponun üst menüsündeki **"Actions"** sekmesine gidin.
-2. En üstteki başarılı **"Build Android APK"** iş akışına tıklayın.
-3. Sayfanın en altındaki **Artifacts (Yapıtlar)** kısmından **`MesaiTakip-APK`** paketini indirin.
+2. En son çalışan **"Build Android APK"** derlemesine tıklayın.
+3. Sayfanın altındaki **Artifacts** kısmından **`MesaiTakip-APK`** dosyasını indirin.
 
 > **💡 İpucu (Bilinmeyen Kaynaklar Uyarısı):** Google Play dışından indirilen tüm APK'larda Android varsayılan olarak güvenlik uyarısı verir. Kuruluma devam etmek için *"Bu kaynaktan yüklemeye izin ver"* seçeneğini onaylamanız yeterlidir.
 
