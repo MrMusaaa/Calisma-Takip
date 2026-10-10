@@ -5,9 +5,12 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
-    name: Build Debug APK
+    name: Build APK
     runs-on: ubuntu-latest
 
     steps:
@@ -37,9 +40,32 @@ jobs:
       - name: Build Debug APK
         run: ./gradlew assembleDebug --no-daemon --stacktrace
 
+      - name: Rename APK for Easy Download
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk MesaiTakip.apk
+
       - name: Upload APK as Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MesaiTakip-Debug-APK
-          path: app/build/outputs/apk/debug/*.apk
+          name: MesaiTakip-APK
+          path: MesaiTakip.apk
           retention-days: 30
+
+      - name: Create or Update GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        with:
+          tag_name: v1.0.0
+          name: "Mesai Takip v1.0.0 (Hazır APK)"
+          body: |
+            ### 📲 Kurulum Dosyası
+            Aşağıdaki **`MesaiTakip.apk`** dosyasına tıklayarak doğrudan telefonunuza indirebilir ve kurabilirsiniz.
+            
+            - ⏱ Kilit ekranından anında Başlat / Bitir
+            - 🔋 Sıfır arka plan pil tüketimi
+            - 💰 Pazartesi - Pazar haftalık döngü & Salı Maaş Günü
+            - 📊 İnteraktif haftalık mesai ve kazanç grafiği
+          files: MesaiTakip.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
