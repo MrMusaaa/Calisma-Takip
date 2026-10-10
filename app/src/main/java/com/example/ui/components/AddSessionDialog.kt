@@ -10,11 +10,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -27,6 +34,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.data.WeekHelper
 import java.time.LocalDate
 
 @Composable
@@ -45,7 +54,13 @@ fun AddSessionDialog(
         note: String
     ) -> Unit
 ) {
-    var selectedDateOffset by remember { mutableStateOf(0) } // 0 = today, -1 = yesterday
+    val initialDate = LocalDate.now()
+    var selectedDate by remember { mutableStateOf(initialDate) }
+
+    var dayText by remember { mutableStateOf(selectedDate.dayOfMonth.toString()) }
+    var monthText by remember { mutableStateOf(selectedDate.monthValue.toString()) }
+    var yearText by remember { mutableStateOf(selectedDate.year.toString()) }
+
     var startHourText by remember { mutableStateOf("09") }
     var startMinuteText by remember { mutableStateOf("00") }
     var endHourText by remember { mutableStateOf("17") }
@@ -54,16 +69,29 @@ fun AddSessionDialog(
     var rateText by remember { mutableStateOf(defaultHourlyRate.toInt().toString()) }
     var noteText by remember { mutableStateOf("") }
 
-    val targetDate = LocalDate.now().plusDays(selectedDateOffset.toLong())
+    fun syncDateState(newDate: LocalDate) {
+        selectedDate = newDate
+        dayText = newDate.dayOfMonth.toString()
+        monthText = newDate.monthValue.toString()
+        yearText = newDate.year.toString()
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(
-                text = "Manuel Mesai Ekle",
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.titleLarge
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.CalendarMonth,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Manuel Mesai Ekle",
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleLarge
+                )
+            }
         },
         text = {
             Column(
@@ -72,27 +100,116 @@ fun AddSessionDialog(
                     .padding(vertical = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Date selection chips
-                Text(
-                    text = "Tarih Seçimi:",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
+                // Live Selected Date Header
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        FilledTonalIconButton(
+                            onClick = { syncDateState(selectedDate.minusDays(1)) }
+                        ) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Önceki Gün")
+                        }
+
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = selectedDate.format(WeekHelper.DATE_FORMATTER),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        }
+
+                        FilledTonalIconButton(
+                            onClick = { syncDateState(selectedDate.plusDays(1)) }
+                        ) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Sonraki Gün")
+                        }
+                    }
+                }
+
+                // Explicit Date Inputs: Gün / Ay / Yıl
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    OutlinedTextField(
+                        value = dayText,
+                        onValueChange = {
+                            if (it.length <= 2) {
+                                dayText = it
+                                val d = it.toIntOrNull()
+                                if (d != null && d in 1..31) {
+                                    try {
+                                        selectedDate = selectedDate.withDayOfMonth(d)
+                                    } catch (_: Exception) {}
+                                }
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        label = { Text("Gün") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true
+                    )
+
+                    OutlinedTextField(
+                        value = monthText,
+                        onValueChange = {
+                            if (it.length <= 2) {
+                                monthText = it
+                                val m = it.toIntOrNull()
+                                if (m != null && m in 1..12) {
+                                    try {
+                                        selectedDate = selectedDate.withMonth(m)
+                                    } catch (_: Exception) {}
+                                }
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        label = { Text("Ay") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true
+                    )
+
+                    OutlinedTextField(
+                        value = yearText,
+                        onValueChange = {
+                            if (it.length <= 4) {
+                                yearText = it
+                                val y = it.toIntOrNull()
+                                if (y != null && y in 2020..2035) {
+                                    try {
+                                        selectedDate = selectedDate.withYear(y)
+                                    } catch (_: Exception) {}
+                                }
+                            }
+                        },
+                        modifier = Modifier.weight(1.3f),
+                        label = { Text("Yıl") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true
+                    )
+                }
+
+                // Quick buttons: Bugün / Dün
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     FilterChip(
-                        selected = selectedDateOffset == 0,
-                        onClick = { selectedDateOffset = 0 },
+                        selected = selectedDate == LocalDate.now(),
+                        onClick = { syncDateState(LocalDate.now()) },
                         label = { Text("Bugün") }
                     )
                     FilterChip(
-                        selected = selectedDateOffset == -1,
-                        onClick = { selectedDateOffset = -1 },
+                        selected = selectedDate == LocalDate.now().minusDays(1),
+                        onClick = { syncDateState(LocalDate.now().minusDays(1)) },
                         label = { Text("Dün") }
-                    )
-                    FilterChip(
-                        selected = selectedDateOffset == -2,
-                        onClick = { selectedDateOffset = -2 },
-                        label = { Text("2 Gün Önce") }
                     )
                 }
 
@@ -103,7 +220,7 @@ fun AddSessionDialog(
                 ) {
                     Text(
                         text = "Başlangıç:",
-                        modifier = Modifier.width(80.dp),
+                        modifier = Modifier.width(76.dp),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     OutlinedTextField(
@@ -119,7 +236,7 @@ fun AddSessionDialog(
                         value = startMinuteText,
                         onValueChange = { if (it.length <= 2) startMinuteText = it },
                         modifier = Modifier.weight(1f),
-                        label = { Text("Dakika") },
+                        label = { Text("Dk") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true
                     )
@@ -132,7 +249,7 @@ fun AddSessionDialog(
                 ) {
                     Text(
                         text = "Bitiş:",
-                        modifier = Modifier.width(80.dp),
+                        modifier = Modifier.width(76.dp),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     OutlinedTextField(
@@ -148,13 +265,13 @@ fun AddSessionDialog(
                         value = endMinuteText,
                         onValueChange = { if (it.length <= 2) endMinuteText = it },
                         modifier = Modifier.weight(1f),
-                        label = { Text("Dakika") },
+                        label = { Text("Dk") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true
                     )
                 }
 
-                // Break & Rate row
+                // Break & Hourly rate
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -183,7 +300,7 @@ fun AddSessionDialog(
                     onValueChange = { noteText = it },
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text("Not (isteğe bağlı)") },
-                    placeholder = { Text("Örn: Fazla mesai, hafta sonu vardiyası") },
+                    placeholder = { Text("Örn: Fazla mesai, vardiya notu") },
                     singleLine = true
                 )
             }
@@ -198,7 +315,7 @@ fun AddSessionDialog(
                     val brk = breakMinutesText.toIntOrNull()?.coerceAtLeast(0) ?: 0
                     val rate = rateText.toDoubleOrNull() ?: defaultHourlyRate
 
-                    onConfirm(targetDate, sH, sM, eH, eM, brk, rate, noteText)
+                    onConfirm(selectedDate, sH, sM, eH, eM, brk, rate, noteText)
                 },
                 shape = RoundedCornerShape(12.dp)
             ) {

@@ -97,6 +97,14 @@ fun WidgetGuideDialog(
                     title = "4. Pazartesi-Pazar Döngüsü & Salı Maaş Günü",
                     description = "Mesaileriniz her hafta Pazartesi 00:00 ile Pazar 23:59 arasında toplanır. Her Salı günü maaş günü olarak hesaplanır ve hakediş tutarınız önünüze gelir."
                 )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                GuideSection(
+                    icon = Icons.Default.Lock,
+                    title = "📱 Redmi 12 (HyperOS / MIUI) Kilit Ekranı",
+                    description = "Redmi 12'de uygulamayı açtığınız andan itibaren kilit ekranında 'Mesai Takip' paneli görünür. Göremiyorsanız: Ayarlar > Bildirimler ve Kontrol Merkezi > Kilit Ekranı bölümünden 'Mesai Takip'e kilit ekranında gösterim izni verin."
+                )
             }
         },
         confirmButton = {

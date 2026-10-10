@@ -143,14 +143,19 @@ fun WorkHomeScreen(
             )
         },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
+            androidx.compose.material3.FloatingActionButton(
                 onClick = { showAddDialog = true },
-                icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { Text("Manuel Mesai Ekle", fontWeight = FontWeight.SemiBold) },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
+                shape = androidx.compose.foundation.shape.CircleShape,
                 modifier = Modifier.testTag("add_session_fab")
-            )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Mesai Ekle",
+                    modifier = Modifier.size(28.dp)
+                )
+            }
         }
     ) { innerPadding ->
         LazyColumn(
@@ -160,23 +165,6 @@ fun WorkHomeScreen(
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 88.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Hero Banner Visual
-            item {
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    tonalElevation = 2.dp,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(140.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.work_hero_banner_1791615213891),
-                        contentDescription = "Mesai Takip ve Maaş Günü",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-            }
 
             // 1. Live Active Shift / Stopwatch Card
             item {

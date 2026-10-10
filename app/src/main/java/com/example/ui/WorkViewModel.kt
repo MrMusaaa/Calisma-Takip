@@ -161,8 +161,7 @@ class WorkViewModel(application: Application) : AndroidViewModel(application) {
 
     fun startWork(note: String = "") {
         repository.startWork(note)
-        val startTime = repository.preferences.activeStartTimeMillis
-        NotificationHelper.showActiveWorkNotification(context, startTime)
+        NotificationHelper.updateNotification(context)
         WorkTrackerWidgetProvider.updateAllWidgets(context)
         com.example.widget.WorkTileService.requestTileUpdate(context)
     }
@@ -170,7 +169,7 @@ class WorkViewModel(application: Application) : AndroidViewModel(application) {
     fun stopWork() {
         viewModelScope.launch {
             repository.stopWork()
-            NotificationHelper.cancelActiveWorkNotification(context)
+            NotificationHelper.updateNotification(context)
             WorkTrackerWidgetProvider.updateAllWidgets(context)
             com.example.widget.WorkTileService.requestTileUpdate(context)
         }

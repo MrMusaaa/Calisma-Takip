@@ -29,7 +29,7 @@ class WorkTileService : TileService() {
             // STOP WORK
             CoroutineScope(Dispatchers.IO).launch {
                 repository.stopWork()
-                NotificationHelper.cancelActiveWorkNotification(applicationContext)
+                NotificationHelper.updateNotification(applicationContext)
                 WorkTrackerWidgetProvider.updateAllWidgets(applicationContext)
                 launch(Dispatchers.Main) {
                     updateTileState()
@@ -38,8 +38,7 @@ class WorkTileService : TileService() {
         } else {
             // START WORK
             repository.startWork()
-            val startTime = repository.preferences.activeStartTimeMillis
-            NotificationHelper.showActiveWorkNotification(applicationContext, startTime)
+            NotificationHelper.updateNotification(applicationContext)
             WorkTrackerWidgetProvider.updateAllWidgets(applicationContext)
             updateTileState()
         }

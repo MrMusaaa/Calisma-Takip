@@ -28,15 +28,20 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Create notification channel for lock screen timer
+        // Create notification channel and display lock screen notification controller immediately
         NotificationHelper.createNotificationChannel(this)
+        NotificationHelper.updateNotification(this)
 
         setContent {
             MyApplicationTheme {
                 // Request notification permission on Android 13+ if not already granted
                 val permissionLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.RequestPermission(),
-                    onResult = { /* granted or denied handled gracefully */ }
+                    onResult = { granted ->
+                        if (granted) {
+                            NotificationHelper.updateNotification(this@MainActivity)
+                        }
+                    }
                 )
 
                 LaunchedEffect(Unit) {
@@ -47,7 +52,11 @@ class MainActivity : ComponentActivity() {
                         ) == PackageManager.PERMISSION_GRANTED
                         if (!isGranted) {
                             permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        } else {
+                            NotificationHelper.updateNotification(this@MainActivity)
                         }
+                    } else {
+                        NotificationHelper.updateNotification(this@MainActivity)
                     }
                 }
 

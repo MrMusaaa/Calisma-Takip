@@ -18,8 +18,7 @@ class WorkActionReceiver : BroadcastReceiver() {
             ACTION_START_WORK -> {
                 if (!repository.preferences.isWorking) {
                     repository.startWork()
-                    val startTime = repository.preferences.activeStartTimeMillis
-                    NotificationHelper.showActiveWorkNotification(context, startTime)
+                    NotificationHelper.updateNotification(context)
                     WorkTrackerWidgetProvider.updateAllWidgets(context)
                     WorkTileService.requestTileUpdate(context)
                 }
@@ -32,7 +31,7 @@ class WorkActionReceiver : BroadcastReceiver() {
                         try {
                             repository.stopWork()
                         } finally {
-                            NotificationHelper.cancelActiveWorkNotification(context)
+                            NotificationHelper.updateNotification(context)
                             WorkTrackerWidgetProvider.updateAllWidgets(context)
                             WorkTileService.requestTileUpdate(context)
                             pendingResult.finish()
@@ -48,7 +47,7 @@ class WorkActionReceiver : BroadcastReceiver() {
                         try {
                             repository.stopWork()
                         } finally {
-                            NotificationHelper.cancelActiveWorkNotification(context)
+                            NotificationHelper.updateNotification(context)
                             WorkTrackerWidgetProvider.updateAllWidgets(context)
                             WorkTileService.requestTileUpdate(context)
                             pendingResult.finish()
@@ -56,8 +55,7 @@ class WorkActionReceiver : BroadcastReceiver() {
                     }
                 } else {
                     repository.startWork()
-                    val startTime = repository.preferences.activeStartTimeMillis
-                    NotificationHelper.showActiveWorkNotification(context, startTime)
+                    NotificationHelper.updateNotification(context)
                     WorkTrackerWidgetProvider.updateAllWidgets(context)
                     WorkTileService.requestTileUpdate(context)
                 }
