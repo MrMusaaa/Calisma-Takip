@@ -50,13 +50,10 @@ data class WorkSession(
 
     /**
      * Onlar basamağındaki küsürat ne olursa olsun yüzler basamağına yukarı yuvarlanan kazanç.
-     * Örnek: 1210 -> 1300, 1205 -> 1300, 1200 -> 1200, 45 -> 100.
+     * Tam yüzlükler (2000, 2100 vb.) kesinlikle korunur; 2010 -> 2100, 2120 -> 2200 olur.
      */
     val totalEarnings: Double
-        get() {
-            val raw = rawEarnings
-            return if (raw <= 0.0) 0.0 else kotlin.math.ceil(raw / 100.0) * 100.0
-        }
+        get() = WeekHelper.roundUpToHundred(rawEarnings)
 
     /**
      * Formatted string such as "7 sa 30 dk".

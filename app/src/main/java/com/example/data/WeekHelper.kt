@@ -106,6 +106,28 @@ object WeekHelper {
         val ld = LocalDate.ofEpochDay(epochDay)
         return ld.format(DATE_FORMATTER)
     }
+
+    /**
+     * Küsüratı onlar basamağı ne olursa olsun yüzler basamağına yukarı doğru yuvarlar.
+     * Tam yüzlükler (örn: 2000, 2100, 2200) kesinlikle korunur, artırılmaz.
+     *
+     * Örnekler:
+     * - 2000 -> 2000 (aynı kalır)
+     * - 2010 -> 2100
+     * - 2120 -> 2200
+     * - 2001 -> 2100
+     * - 50   -> 100
+     */
+    fun roundUpToHundred(amount: Double): Double {
+        if (amount <= 0.0) return 0.0
+        val roundedToCents = kotlin.math.round(amount * 100.0) / 100.0
+        val remainder = roundedToCents % 100.0
+        return if (remainder < 0.01 || remainder > 99.99) {
+            kotlin.math.round(roundedToCents / 100.0) * 100.0
+        } else {
+            kotlin.math.ceil(roundedToCents / 100.0) * 100.0
+        }
+    }
 }
 
 data class PaydayStatus(

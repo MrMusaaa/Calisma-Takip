@@ -36,16 +36,18 @@ class ExampleUnitTest {
 
     @Test
     fun testRoundingRulesToNextHundred() {
-        // Test various amounts rounded up to the nearest hundred
-        fun roundUp(raw: Double) = if (raw <= 0.0) 0.0 else kotlin.math.ceil(raw / 100.0) * 100.0
-
-        assertEquals(1300.0, roundUp(1210.0), 0.001)
-        assertEquals(1300.0, roundUp(1205.0), 0.001)
-        assertEquals(1300.0, roundUp(1201.0), 0.001)
-        assertEquals(1200.0, roundUp(1200.0), 0.001)
-        assertEquals(100.0, roundUp(50.0), 0.001)
-        assertEquals(100.0, roundUp(10.0), 0.001)
-        assertEquals(0.0, roundUp(0.0), 0.001)
+        // User requirements:
+        // "eğer 2000 de kalsın ama 2010 sa mesela 2100 yap yada 2120 falansa 2200 yap"
+        assertEquals(2000.0, WeekHelper.roundUpToHundred(2000.0), 0.001)
+        assertEquals(2000.0, WeekHelper.roundUpToHundred(2000.000000000002), 0.001) // Floating point safety
+        assertEquals(2100.0, WeekHelper.roundUpToHundred(2010.0), 0.001)
+        assertEquals(2200.0, WeekHelper.roundUpToHundred(2120.0), 0.001)
+        assertEquals(2100.0, WeekHelper.roundUpToHundred(2100.0), 0.001) // Exact hundred stays
+        assertEquals(2200.0, WeekHelper.roundUpToHundred(2200.0), 0.001) // Exact hundred stays
+        assertEquals(2100.0, WeekHelper.roundUpToHundred(2005.0), 0.001)
+        assertEquals(1300.0, WeekHelper.roundUpToHundred(1210.0), 0.001)
+        assertEquals(100.0, WeekHelper.roundUpToHundred(50.0), 0.001)
+        assertEquals(0.0, WeekHelper.roundUpToHundred(0.0), 0.001)
     }
 
     @Test

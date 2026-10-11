@@ -62,11 +62,6 @@ class WorkViewModel(application: Application) : AndroidViewModel(application) {
     // Flow of all sessions from Room
     private val allSessionsFlow = repository.allSessions
 
-    private fun roundUpToHundred(amount: Double): Double {
-        if (amount <= 0.0) return 0.0
-        return kotlin.math.ceil(amount / 100.0) * 100.0
-    }
-
     // Combine database, preferences, and selected week (Zero background CPU / No timer loops)
     val uiState: StateFlow<WorkUiState> = combine(
         allSessionsFlow,
@@ -92,7 +87,7 @@ class WorkViewModel(application: Application) : AndroidViewModel(application) {
             it.dateEpochDay >= previousCompletedWeek.startEpochDay && it.dateEpochDay <= previousCompletedWeek.endEpochDay
         }
         val payoutHours = payoutWeekSessions.sumOf { it.netHours }
-        val payoutEarnings = roundUpToHundred(payoutWeekSessions.sumOf { it.totalEarnings })
+        val payoutEarnings = WeekHelper.roundUpToHundred(payoutWeekSessions.sumOf { it.rawEarnings })
         val isPayoutPaid = prefs.isWeekPaid(previousCompletedWeek.weekKey)
 
         // 2. Ongoing Current Week (Pazartesi - Pazar): Accumulating for the following Tuesday
@@ -100,14 +95,14 @@ class WorkViewModel(application: Application) : AndroidViewModel(application) {
             it.dateEpochDay >= currentWeek.startEpochDay && it.dateEpochDay <= currentWeek.endEpochDay
         }
         val ongoingHours = ongoingWeekSessions.sumOf { it.netHours }
-        val ongoingEarnings = roundUpToHundred(ongoingWeekSessions.sumOf { it.totalEarnings })
+        val ongoingEarnings = WeekHelper.roundUpToHundred(ongoingWeekSessions.sumOf { it.rawEarnings })
 
         // 3. Selected week details (can be any past/current week)
         val selectedWeekSessions = allSessions.filter {
             it.dateEpochDay >= selectedWeekPeriod.startEpochDay && it.dateEpochDay <= selectedWeekPeriod.endEpochDay
         }
         val totalSelectedWeekHours = selectedWeekSessions.sumOf { it.netHours }
-        val totalSelectedWeekEarnings = roundUpToHundred(selectedWeekSessions.sumOf { it.totalEarnings })
+        val totalSelectedWeekEarnings = WeekHelper.roundUpToHundred(selectedWeekSessions.sumOf { it.rawEarnings })
         val isSelectedWeekPaid = prefs.isWeekPaid(selectedWeekPeriod.weekKey)
 
         val daySummaries = (0..6).map { dayIndex ->
@@ -115,8 +110,8 @@ class WorkViewModel(application: Application) : AndroidViewModel(application) {
             val dayOfWeek = date.dayOfWeek
             val daySessions = selectedWeekSessions.filter { it.dateEpochDay == date.toEpochDay() }
             val dayHours = daySessions.sumOf { it.netHours }
-            val daySum = daySessions.sumOf { it.totalEarnings }
-            val dayEarnings = roundUpToHundred(daySum)
+            val daySum = daySessions.sumOf { it.rawEarnings }
+            val dayEarnings = WeekHelper.roundUpToHundred(daySum)
 
             val shortName = when (dayOfWeek) {
                 DayOfWeek.MONDAY -> "Pzt"
