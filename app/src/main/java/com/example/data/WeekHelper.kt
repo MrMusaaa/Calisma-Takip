@@ -128,6 +128,34 @@ object WeekHelper {
             kotlin.math.ceil(roundedToCents / 100.0) * 100.0
         }
     }
+
+    /**
+     * Kullanıcı kuralına göre çalışma süresini saat olarak yuvarlar:
+     * - Dakika < 15 ise (örn: 12.10) -> Aşağı yuvarla (12.0 saat)
+     * - Dakika 15..29 arası ise (örn: 12.15) -> 12:30 yap (12.5 saat)
+     * - Dakika >= 30 ise (örn: 12.30 ve üstü) -> Direkt bir üste yuvarla (13.0 saat)
+     */
+    fun roundWorkHours(totalMinutes: Long): Double {
+        if (totalMinutes <= 0L) return 0.0
+        val fullHours = totalMinutes / 60
+        val minutes = totalMinutes % 60
+        return when {
+            minutes < 15 -> fullHours.toDouble()
+            minutes < 30 -> fullHours + 0.5
+            else -> (fullHours + 1).toDouble()
+        }
+    }
+
+    fun formatRoundedHours(roundedHours: Double): String {
+        val h = roundedHours.toInt()
+        val isHalf = (roundedHours - h) >= 0.4
+        return when {
+            h > 0 && isHalf -> "${h}s 30dk"
+            h > 0 -> "${h}s"
+            isHalf -> "30dk"
+            else -> "0s"
+        }
+    }
 }
 
 data class PaydayStatus(

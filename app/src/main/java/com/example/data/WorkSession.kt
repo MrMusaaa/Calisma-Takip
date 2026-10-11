@@ -27,23 +27,23 @@ data class WorkSession(
         .toEpochDay()
 ) {
     /**
-     * Net duration in milliseconds (after subtracting unpaid break minutes).
+     * Toplam çalışma süresi (dakika olarak).
+     * Mola parametresi kaldırılmıştır.
      */
-    val netDurationMillis: Long
-        get() {
-            val total = (endTimeMillis - startTimeMillis).coerceAtLeast(0L)
-            val breakMillis = (breakMinutes * 60 * 1000L).coerceAtLeast(0L)
-            return (total - breakMillis).coerceAtLeast(0L)
-        }
+    val totalMinutes: Long
+        get() = (endTimeMillis - startTimeMillis).coerceAtLeast(0L) / (1000 * 60)
 
     /**
-     * Net hours as Double (e.g. 7.5 hours).
+     * Yuvarlanmış çalışma saati:
+     * - Dakika < 15 ise -> Tam saate aşağı yuvarla (örn: 12.10 -> 12.0 saat)
+     * - Dakika 15..29 ise -> Buçuğa yuvarla (örn: 12.15 -> 12.5 saat)
+     * - Dakika >= 30 ise -> Direkt bir üste yuvarla (örn: 12.30+ -> 13.0 saat)
      */
     val netHours: Double
-        get() = netDurationMillis / (1000.0 * 60 * 60)
+        get() = WeekHelper.roundWorkHours(totalMinutes)
 
     /**
-     * Ham (yuvarlanmamış) kazanç tutarı = netHours * hourlyRate.
+     * Ham kazanç tutarı = netHours * hourlyRate.
      */
     val rawEarnings: Double
         get() = netHours * hourlyRate
@@ -56,17 +56,8 @@ data class WorkSession(
         get() = WeekHelper.roundUpToHundred(rawEarnings)
 
     /**
-     * Formatted string such as "7 sa 30 dk".
+     * Formatlı süre (örn: "12s", "12s 30dk").
      */
     val formattedDuration: String
-        get() {
-            val totalMinutes = netDurationMillis / (1000 * 60)
-            val hours = totalMinutes / 60
-            val minutes = totalMinutes % 60
-            return if (hours > 0) {
-                "${hours}s ${minutes}dk"
-            } else {
-                "${minutes}dk"
-            }
-        }
+        get() = WeekHelper.formatRoundedHours(netHours)
 }

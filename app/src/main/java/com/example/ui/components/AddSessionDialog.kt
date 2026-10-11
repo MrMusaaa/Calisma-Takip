@@ -65,7 +65,6 @@ fun AddSessionDialog(
     var startMinuteText by remember { mutableStateOf("00") }
     var endHourText by remember { mutableStateOf("17") }
     var endMinuteText by remember { mutableStateOf("30") }
-    var breakMinutesText by remember { mutableStateOf("30") }
     var rateText by remember { mutableStateOf(defaultHourlyRate.toInt().toString()) }
     var noteText by remember { mutableStateOf("") }
 
@@ -271,28 +270,15 @@ fun AddSessionDialog(
                     )
                 }
 
-                // Break & Hourly rate
-                Row(
+                // Hourly rate (full width)
+                OutlinedTextField(
+                    value = rateText,
+                    onValueChange = { rateText = it },
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedTextField(
-                        value = breakMinutesText,
-                        onValueChange = { breakMinutesText = it },
-                        modifier = Modifier.weight(1f),
-                        label = { Text("Mola (dk)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true
-                    )
-                    OutlinedTextField(
-                        value = rateText,
-                        onValueChange = { rateText = it },
-                        modifier = Modifier.weight(1f),
-                        label = { Text("Saat Ücreti ($currencySymbol)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true
-                    )
-                }
+                    label = { Text("Saat Ücreti ($currencySymbol)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true
+                )
 
                 // Optional Note
                 OutlinedTextField(
@@ -312,10 +298,9 @@ fun AddSessionDialog(
                     val sM = startMinuteText.toIntOrNull()?.coerceIn(0, 59) ?: 0
                     val eH = endHourText.toIntOrNull()?.coerceIn(0, 23) ?: 17
                     val eM = endMinuteText.toIntOrNull()?.coerceIn(0, 59) ?: 30
-                    val brk = breakMinutesText.toIntOrNull()?.coerceAtLeast(0) ?: 0
                     val rate = rateText.toDoubleOrNull() ?: defaultHourlyRate
 
-                    onConfirm(selectedDate, sH, sM, eH, eM, brk, rate, noteText)
+                    onConfirm(selectedDate, sH, sM, eH, eM, 0, rate, noteText)
                 },
                 shape = RoundedCornerShape(12.dp)
             ) {
