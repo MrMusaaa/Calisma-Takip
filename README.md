@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="app/src/main/res/drawable/work_hero_banner_1791615213891.jpg" alt="Mesai Takip Banner" width="100%" style="border-radius: 16px;" />
+  <img src="app/src/main/res/drawable/app_icon_fg_1791615200348.jpg" alt="Mesai Takip" width="120" style="border-radius: 24px;" />
 </p>
 
 # ⏱ Mesai Takip — Kilit Ekranı Sayacı & Salı Maaş Günü Takipçisi

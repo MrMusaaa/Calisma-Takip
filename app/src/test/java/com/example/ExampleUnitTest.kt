@@ -12,7 +12,7 @@ import java.time.LocalDate
 class ExampleUnitTest {
 
     @Test
-    fun testWorkSessionEarningsCalculation() {
+    fun testWorkSessionEarningsCalculationWithRoundingUpToHundreds() {
         val startMillis = 1000000000L
         // 8 hours later (8 * 3600 * 1000 = 28,800,000 ms)
         val endMillis = startMillis + (8 * 3600 * 1000L)
@@ -27,8 +27,25 @@ class ExampleUnitTest {
         )
 
         assertEquals(7.5, session.netHours, 0.001)
-        assertEquals(7.5 * 250.0, session.totalEarnings, 0.001) // 1875.0
+        // Raw is 7.5 * 250.0 = 1875.0
+        // Rounded up to the nearest hundred: 1900.0
+        assertEquals(1875.0, session.rawEarnings, 0.001)
+        assertEquals(1900.0, session.totalEarnings, 0.001)
         assertEquals("7s 30dk", session.formattedDuration)
+    }
+
+    @Test
+    fun testRoundingRulesToNextHundred() {
+        // Test various amounts rounded up to the nearest hundred
+        fun roundUp(raw: Double) = if (raw <= 0.0) 0.0 else kotlin.math.ceil(raw / 100.0) * 100.0
+
+        assertEquals(1300.0, roundUp(1210.0), 0.001)
+        assertEquals(1300.0, roundUp(1205.0), 0.001)
+        assertEquals(1300.0, roundUp(1201.0), 0.001)
+        assertEquals(1200.0, roundUp(1200.0), 0.001)
+        assertEquals(100.0, roundUp(50.0), 0.001)
+        assertEquals(100.0, roundUp(10.0), 0.001)
+        assertEquals(0.0, roundUp(0.0), 0.001)
     }
 
     @Test

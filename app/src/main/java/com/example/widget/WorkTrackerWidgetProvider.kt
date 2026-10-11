@@ -6,8 +6,6 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.os.SystemClock
-import android.view.View
 import android.widget.RemoteViews
 import com.example.MainActivity
 import com.example.R
@@ -54,29 +52,24 @@ class WorkTrackerWidgetProvider : AppWidgetProvider() {
             val startTime = prefs.activeStartTimeMillis
 
             if (isWorking && startTime > 0) {
-                // ACTIVE STATE
+                // ACTIVE STATE (Duolingo style)
+                views.setTextViewText(R.id.widget_title, "🔥 MESAİDESİN")
                 views.setTextViewText(R.id.widget_status_badge, "● ÇALIŞIYOR")
                 views.setInt(R.id.widget_status_badge, "setBackgroundColor", android.graphics.Color.parseColor("#065F46"))
                 views.setTextColor(R.id.widget_status_badge, android.graphics.Color.parseColor("#34D399"))
 
                 val timeStr = try {
                     val dt = LocalDateTime.ofInstant(Instant.ofEpochMilli(startTime), ZoneId.systemDefault())
-                    dt.format(DateTimeFormatter.ofPattern("HH:mm"))
+                    dt.format(DateTimeFormatter.ofPattern("HH:mm, d MMM"))
                 } catch (e: Exception) {
                     ""
                 }
                 views.setTextViewText(R.id.widget_time_text, "Başlama: $timeStr")
-                views.setTextViewText(R.id.widget_subtitle, "Pil dostu kayıt • Salı Maaş Günü")
+                views.setTextViewText(R.id.widget_subtitle, "Pil harcamaz • Salı: Maaş Günü")
 
-                // Setup chronometer
-                val elapsedSinceStart = System.currentTimeMillis() - startTime
-                val chronometerBase = SystemClock.elapsedRealtime() - elapsedSinceStart
-                views.setChronometer(R.id.widget_chronometer, chronometerBase, null, true)
-                views.setViewVisibility(R.id.widget_chronometer, View.VISIBLE)
-
-                // Setup Stop button
-                views.setTextViewText(R.id.widget_btn_action, "⏹ MESAİYİ BİTİR")
-                views.setInt(R.id.widget_btn_action, "setBackgroundResource", R.drawable.widget_btn_stop_bg)
+                // Setup Stop 3D button
+                views.setTextViewText(R.id.widget_btn_action, "⏹ MESAİYİ BİTİR VE KAYDET")
+                views.setInt(R.id.widget_btn_action, "setBackgroundResource", R.drawable.duo_btn_stop)
 
                 val stopIntent = Intent(context, WorkActionReceiver::class.java).apply {
                     action = WorkActionReceiver.ACTION_STOP_WORK
@@ -89,18 +82,18 @@ class WorkTrackerWidgetProvider : AppWidgetProvider() {
                 )
                 views.setOnClickPendingIntent(R.id.widget_btn_action, stopPendingIntent)
             } else {
-                // IDLE STATE
+                // IDLE STATE (Duolingo style)
+                views.setTextViewText(R.id.widget_title, "🦉 MESAİ TAKİP")
                 views.setTextViewText(R.id.widget_status_badge, "BOŞTA")
-                views.setInt(R.id.widget_status_badge, "setBackgroundColor", android.graphics.Color.parseColor("#334155"))
+                views.setInt(R.id.widget_status_badge, "setBackgroundColor", android.graphics.Color.parseColor("#1E293B"))
                 views.setTextColor(R.id.widget_status_badge, android.graphics.Color.parseColor("#94A3B8"))
 
-                views.setViewVisibility(R.id.widget_chronometer, View.GONE)
-                views.setTextViewText(R.id.widget_time_text, "Mesaiye Başla")
-                views.setTextViewText(R.id.widget_subtitle, "Saatlik: ${prefs.hourlyRate.toInt()} ${prefs.currencySymbol} • Salı Maaş")
+                views.setTextViewText(R.id.widget_time_text, "Yeni Vardiyayı Başlat")
+                views.setTextViewText(R.id.widget_subtitle, "Saatlik: ${prefs.hourlyRate.toInt()} ${prefs.currencySymbol} • Sıfır Pil Tüketimi")
 
-                // Setup Start button
-                views.setTextViewText(R.id.widget_btn_action, "▶ BAŞLAT")
-                views.setInt(R.id.widget_btn_action, "setBackgroundResource", R.drawable.widget_btn_start_bg)
+                // Setup Start 3D button
+                views.setTextViewText(R.id.widget_btn_action, "▶ MESAİYİ BAŞLAT")
+                views.setInt(R.id.widget_btn_action, "setBackgroundResource", R.drawable.duo_btn_start)
 
                 val startIntent = Intent(context, WorkActionReceiver::class.java).apply {
                     action = WorkActionReceiver.ACTION_START_WORK

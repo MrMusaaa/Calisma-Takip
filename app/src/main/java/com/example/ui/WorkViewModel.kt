@@ -10,8 +10,8 @@ import com.example.data.WeekPeriod
 import com.example.data.WorkRepository
 import com.example.data.WorkSession
 import com.example.widget.NotificationHelper
+import com.example.widget.WorkTileService
 import com.example.widget.WorkTrackerWidgetProvider
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -19,23 +19,32 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
 
 data class WorkUiState(
     val isWorking: Boolean = false,
     val activeStartTimeMillis: Long = 0L,
-    val activeElapsedSeconds: Long = 0L,
     val hourlyRate: Double = 250.0,
     val currencySymbol: String = "₺",
     val selectedWeekOffset: Int = 0,
     val currentWeekPeriod: WeekPeriod = WeekHelper.getWeekPeriod(0),
+    val previousWeekPeriod: WeekPeriod = WeekHelper.getWeekPeriod(-1),
     val paydayStatus: PaydayStatus = WeekHelper.getPaydayStatus(),
-    val isWeekPaid: Boolean = false,
+    val isSelectedWeekPaid: Boolean = false,
+    val isPayoutWeekPaid: Boolean = false,
+
+    // Upcoming Tuesday Payout: the previous completed Monday-Sunday week to be paid this Tuesday
+    val payoutWeekPeriod: WeekPeriod = WeekHelper.getWeekPeriod(-1),
+    val payoutWeekEarnings: Double = 0.0,
+    val payoutWeekHours: Double = 0.0,
+
+    // Current ongoing week's accumulating earnings (to be paid next Tuesday)
+    val ongoingWeekEarnings: Double = 0.0,
+    val ongoingWeekHours: Double = 0.0,
+
+    // Selected week view (for chart and historical view)
     val weekSessions: List<WorkSession> = emptyList(),
     val totalWeekHours: Double = 0.0,
     val totalWeekEarnings: Double = 0.0,
@@ -50,43 +59,64 @@ class WorkViewModel(application: Application) : AndroidViewModel(application) {
     private val _selectedWeekOffset = MutableStateFlow(0)
     val selectedWeekOffset: StateFlow<Int> = _selectedWeekOffset.asStateFlow()
 
-    private val _activeElapsedSeconds = MutableStateFlow(0L)
-
     // Flow of all sessions from Room
     private val allSessionsFlow = repository.allSessions
 
-    // Combine database, active status, preferences, and selected week
+    private fun roundUpToHundred(amount: Double): Double {
+        if (amount <= 0.0) return 0.0
+        return kotlin.math.ceil(amount / 100.0) * 100.0
+    }
+
+    // Combine database, preferences, and selected week (Zero background CPU / No timer loops)
     val uiState: StateFlow<WorkUiState> = combine(
         allSessionsFlow,
         _selectedWeekOffset,
-        _activeElapsedSeconds,
         repository.preferences.preferencesChanges
-    ) { allSessions, offset, elapsed, _ ->
+    ) { allSessions, offset, _ ->
         val prefs = repository.preferences
         val isWorking = prefs.isWorking
         val startTime = prefs.activeStartTimeMillis
         val rate = prefs.hourlyRate
         val currency = prefs.currencySymbol
 
-        val weekPeriod = WeekHelper.getWeekPeriod(offset)
-        val paydayStatus = WeekHelper.getPaydayStatus()
-        val isPaid = prefs.isWeekPaid(weekPeriod.weekKey)
-
-        // Filter sessions within this week's Monday 00:00 to Sunday 23:59:59 (by epochDay)
-        val weekSessions = allSessions.filter {
-            it.dateEpochDay >= weekPeriod.startEpochDay && it.dateEpochDay <= weekPeriod.endEpochDay
-        }
-
-        val totalWeekHours = weekSessions.sumOf { it.netHours }
-        val totalWeekEarnings = weekSessions.sumOf { it.totalEarnings }
-
         val today = LocalDate.now()
+        val currentWeek = WeekHelper.getWeekPeriodForDate(today)
+        val previousCompletedWeek = WeekHelper.getWeekPeriodForDate(currentWeek.monday.minusDays(1))
+
+        // Selected week period for the chart/history view
+        val selectedWeekPeriod = WeekHelper.getWeekPeriod(offset)
+        val paydayStatus = WeekHelper.getPaydayStatus()
+
+        // 1. Payout Week: The completed previous week (Pazartesi - Pazar) to be paid on upcoming Tuesday
+        val payoutWeekSessions = allSessions.filter {
+            it.dateEpochDay >= previousCompletedWeek.startEpochDay && it.dateEpochDay <= previousCompletedWeek.endEpochDay
+        }
+        val payoutHours = payoutWeekSessions.sumOf { it.netHours }
+        val payoutEarnings = roundUpToHundred(payoutWeekSessions.sumOf { it.totalEarnings })
+        val isPayoutPaid = prefs.isWeekPaid(previousCompletedWeek.weekKey)
+
+        // 2. Ongoing Current Week (Pazartesi - Pazar): Accumulating for the following Tuesday
+        val ongoingWeekSessions = allSessions.filter {
+            it.dateEpochDay >= currentWeek.startEpochDay && it.dateEpochDay <= currentWeek.endEpochDay
+        }
+        val ongoingHours = ongoingWeekSessions.sumOf { it.netHours }
+        val ongoingEarnings = roundUpToHundred(ongoingWeekSessions.sumOf { it.totalEarnings })
+
+        // 3. Selected week details (can be any past/current week)
+        val selectedWeekSessions = allSessions.filter {
+            it.dateEpochDay >= selectedWeekPeriod.startEpochDay && it.dateEpochDay <= selectedWeekPeriod.endEpochDay
+        }
+        val totalSelectedWeekHours = selectedWeekSessions.sumOf { it.netHours }
+        val totalSelectedWeekEarnings = roundUpToHundred(selectedWeekSessions.sumOf { it.totalEarnings })
+        val isSelectedWeekPaid = prefs.isWeekPaid(selectedWeekPeriod.weekKey)
+
         val daySummaries = (0..6).map { dayIndex ->
-            val date = weekPeriod.monday.plusDays(dayIndex.toLong())
+            val date = selectedWeekPeriod.monday.plusDays(dayIndex.toLong())
             val dayOfWeek = date.dayOfWeek
-            val daySessions = weekSessions.filter { it.dateEpochDay == date.toEpochDay() }
+            val daySessions = selectedWeekSessions.filter { it.dateEpochDay == date.toEpochDay() }
             val dayHours = daySessions.sumOf { it.netHours }
-            val dayEarnings = daySessions.sumOf { it.totalEarnings }
+            val daySum = daySessions.sumOf { it.totalEarnings }
+            val dayEarnings = roundUpToHundred(daySum)
 
             val shortName = when (dayOfWeek) {
                 DayOfWeek.MONDAY -> "Pzt"
@@ -124,16 +154,22 @@ class WorkViewModel(application: Application) : AndroidViewModel(application) {
         WorkUiState(
             isWorking = isWorking,
             activeStartTimeMillis = startTime,
-            activeElapsedSeconds = elapsed,
             hourlyRate = rate,
             currencySymbol = currency,
             selectedWeekOffset = offset,
-            currentWeekPeriod = weekPeriod,
+            currentWeekPeriod = selectedWeekPeriod,
+            previousWeekPeriod = previousCompletedWeek,
             paydayStatus = paydayStatus,
-            isWeekPaid = isPaid,
-            weekSessions = weekSessions,
-            totalWeekHours = totalWeekHours,
-            totalWeekEarnings = totalWeekEarnings,
+            isSelectedWeekPaid = isSelectedWeekPaid,
+            isPayoutWeekPaid = isPayoutPaid,
+            payoutWeekPeriod = previousCompletedWeek,
+            payoutWeekEarnings = payoutEarnings,
+            payoutWeekHours = payoutHours,
+            ongoingWeekEarnings = ongoingEarnings,
+            ongoingWeekHours = ongoingHours,
+            weekSessions = selectedWeekSessions,
+            totalWeekHours = totalSelectedWeekHours,
+            totalWeekEarnings = totalSelectedWeekEarnings,
             dayBreakdown = daySummaries,
             allSessions = allSessions
         )
@@ -143,27 +179,11 @@ class WorkViewModel(application: Application) : AndroidViewModel(application) {
         initialValue = WorkUiState()
     )
 
-    init {
-        // Ticker for UI when active (runs only while Composable observes ViewModel)
-        viewModelScope.launch {
-            while (isActive) {
-                val prefs = repository.preferences
-                if (prefs.isWorking && prefs.activeStartTimeMillis > 0) {
-                    val diff = (System.currentTimeMillis() - prefs.activeStartTimeMillis) / 1000L
-                    _activeElapsedSeconds.value = diff.coerceAtLeast(0L)
-                } else {
-                    _activeElapsedSeconds.value = 0L
-                }
-                delay(1000L)
-            }
-        }
-    }
-
     fun startWork(note: String = "") {
         repository.startWork(note)
         NotificationHelper.updateNotification(context)
         WorkTrackerWidgetProvider.updateAllWidgets(context)
-        com.example.widget.WorkTileService.requestTileUpdate(context)
+        WorkTileService.requestTileUpdate(context)
     }
 
     fun stopWork() {
@@ -171,7 +191,7 @@ class WorkViewModel(application: Application) : AndroidViewModel(application) {
             repository.stopWork()
             NotificationHelper.updateNotification(context)
             WorkTrackerWidgetProvider.updateAllWidgets(context)
-            com.example.widget.WorkTileService.requestTileUpdate(context)
+            WorkTileService.requestTileUpdate(context)
         }
     }
 
@@ -195,13 +215,20 @@ class WorkViewModel(application: Application) : AndroidViewModel(application) {
         if (newRate >= 0) {
             repository.preferences.hourlyRate = newRate
             WorkTrackerWidgetProvider.updateAllWidgets(context)
+            NotificationHelper.updateNotification(context)
         }
     }
 
-    fun toggleWeekPaid() {
-        val currentPeriod = uiState.value.currentWeekPeriod
-        val currentPaid = repository.preferences.isWeekPaid(currentPeriod.weekKey)
-        repository.preferences.setWeekPaid(currentPeriod.weekKey, !currentPaid)
+    fun togglePayoutWeekPaid() {
+        val payoutPeriod = uiState.value.payoutWeekPeriod
+        val currentPaid = repository.preferences.isWeekPaid(payoutPeriod.weekKey)
+        repository.preferences.setWeekPaid(payoutPeriod.weekKey, !currentPaid)
+    }
+
+    fun toggleSelectedWeekPaid() {
+        val selectedPeriod = uiState.value.currentWeekPeriod
+        val currentPaid = repository.preferences.isWeekPaid(selectedPeriod.weekKey)
+        repository.preferences.setWeekPaid(selectedPeriod.weekKey, !currentPaid)
     }
 
     fun addManualSession(
@@ -215,10 +242,9 @@ class WorkViewModel(application: Application) : AndroidViewModel(application) {
         note: String
     ) {
         viewModelScope.launch {
-            val zoneId = ZoneId.systemDefault()
+            val zoneId = java.time.ZoneId.systemDefault()
             val startDt = date.atTime(startHour, startMinute)
             var endDt = date.atTime(endHour, endMinute)
-            // If end time is earlier than start time, assumes overnight shift
             if (endDt.isBefore(startDt)) {
                 endDt = endDt.plusDays(1)
             }
@@ -236,6 +262,7 @@ class WorkViewModel(application: Application) : AndroidViewModel(application) {
             )
             repository.insertManualSession(session)
             WorkTrackerWidgetProvider.updateAllWidgets(context)
+            NotificationHelper.updateNotification(context)
         }
     }
 
@@ -243,6 +270,7 @@ class WorkViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             repository.deleteSession(session)
             WorkTrackerWidgetProvider.updateAllWidgets(context)
+            NotificationHelper.updateNotification(context)
         }
     }
 
@@ -250,6 +278,7 @@ class WorkViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             repository.updateSession(session)
             WorkTrackerWidgetProvider.updateAllWidgets(context)
+            NotificationHelper.updateNotification(context)
         }
     }
 }

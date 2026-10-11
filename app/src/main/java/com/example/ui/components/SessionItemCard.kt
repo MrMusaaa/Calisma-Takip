@@ -139,7 +139,7 @@ fun SessionItemCard(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "${String.format(Locale.US, "%.2f", session.totalEarnings)} $currencySymbol",
+                    text = "${String.format(Locale.US, "%,.0f", session.totalEarnings)} $currencySymbol",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.onSurface

@@ -43,10 +43,20 @@ data class WorkSession(
         get() = netDurationMillis / (1000.0 * 60 * 60)
 
     /**
-     * Earned amount for this shift = netHours * hourlyRate.
+     * Ham (yuvarlanmamış) kazanç tutarı = netHours * hourlyRate.
+     */
+    val rawEarnings: Double
+        get() = netHours * hourlyRate
+
+    /**
+     * Onlar basamağındaki küsürat ne olursa olsun yüzler basamağına yukarı yuvarlanan kazanç.
+     * Örnek: 1210 -> 1300, 1205 -> 1300, 1200 -> 1200, 45 -> 100.
      */
     val totalEarnings: Double
-        get() = netHours * hourlyRate
+        get() {
+            val raw = rawEarnings
+            return if (raw <= 0.0) 0.0 else kotlin.math.ceil(raw / 100.0) * 100.0
+        }
 
     /**
      * Formatted string such as "7 sa 30 dk".

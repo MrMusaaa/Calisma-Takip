@@ -1,6 +1,5 @@
 package com.example.ui
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,15 +48,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.R
 import com.example.ui.components.ActiveShiftCard
 import com.example.ui.components.AddSessionDialog
 import com.example.ui.components.HourlyRateDialog
@@ -167,11 +162,11 @@ fun WorkHomeScreen(
         ) {
 
             // 1. Live Active Shift / Stopwatch Card
+            // 1. Active Shift Card (Zero Background CPU Timestamping)
             item {
                 ActiveShiftCard(
                     isWorking = uiState.isWorking,
                     startTimeMillis = uiState.activeStartTimeMillis,
-                    elapsedSeconds = uiState.activeElapsedSeconds,
                     hourlyRate = uiState.hourlyRate,
                     currencySymbol = uiState.currencySymbol,
                     onStartWork = { note -> viewModel.startWork(note) },
@@ -180,16 +175,18 @@ fun WorkHomeScreen(
                 )
             }
 
-            // 2. Tuesday Payday Card (Salı Maaş Günü)
+            // 2. Tuesday Payday Card (Salı Maaş Günü: Önceki Hafta Mesaisi)
             item {
                 PaydayCard(
-                    weekPeriod = uiState.currentWeekPeriod,
                     paydayStatus = uiState.paydayStatus,
-                    totalWeekHours = uiState.totalWeekHours,
-                    totalWeekEarnings = uiState.totalWeekEarnings,
-                    currencySymbol = uiState.currencySymbol,
-                    isWeekPaid = uiState.isWeekPaid,
-                    onTogglePaid = { viewModel.toggleWeekPaid() }
+                    payoutWeekPeriod = uiState.payoutWeekPeriod,
+                    payoutWeekEarnings = uiState.payoutWeekEarnings,
+                    payoutWeekHours = uiState.payoutWeekHours,
+                    isPayoutPaid = uiState.isPayoutWeekPaid,
+                    onTogglePayoutPaid = { viewModel.togglePayoutWeekPaid() },
+                    ongoingWeekEarnings = uiState.ongoingWeekEarnings,
+                    ongoingWeekHours = uiState.ongoingWeekHours,
+                    currencySymbol = uiState.currencySymbol
                 )
             }
 
